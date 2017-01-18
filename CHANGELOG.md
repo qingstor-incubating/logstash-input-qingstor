@@ -1,2 +1,2 @@
 ## 0.1.0
-  - Plugin created with the logstash plugin generator
+  - Basic functions: Fetch file(.log/.gz), delete atfer processing, backup to remote bucket/local dir.

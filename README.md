@@ -1,3 +1,42 @@
+#Logstash Input Plugin for QingStor
+
+This is a  Logstash Input Plugin for QingStor - a object storage service in QingCloud, referencing the [s3 plugin](https://github.com/logstash-plugins/logstash-input-s3). Now it is a Just Running State, we still need time to improve it.
+
+# configs for this plugin 
+```ruby
+  # The key id to access your QingStor
+  config :access_key_id, :validate => :string, :required => true
+
+  # The key to access your QingStor
+  config :secret_access_key, :validate => :string, :required => true
+
+  # The name of the qingstor bucket
+  config :bucket, :validate => :string, :required => true
+
+  # The region of the QingStor bucket
+  config :region, :validate => :string, :required => true
+
+  # The prefix of filenames
+  config :prefix, :validate => :string, :default => nil
+
+  # If this set to true, the file will be deleted after processing
+  config :delete_later, :validate => :boolean, :default => false
+  
+  # If this set to true, the file will backup to a local dir,
+  # please make sure you can access to this dir.
+  config :local_dir, :validate => :string, :default => nil
+
+  # If specified, the file will be upload to this bucket of the given region
+  config :backup_bucket, :validate => :string, :default => nil
+  config :backup_region, :validate => :string, :default => nil
+
+  # This prefix will add before backup filename.
+  config :backup_prefix, :validate => :string, :default => nil
+  
+  # Use sincedb to record the last downloas time 
+  config :sincedb_path, :validate => :string, :default => nil 
+``` 
+
 # Logstash Plugin
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash).
@@ -29,22 +68,6 @@ Need help? Try #logstash on freenode IRC or the https://discuss.elastic.co/c/log
 bundle install
 ```
 
-#### Test
-
-- Update your dependencies
-
-```sh
-bundle install
-```
-
-- Run tests
-
-```sh
-bundle exec rspec
-```
-
-### 2. Running your unpublished Plugin in Logstash
-
 #### 2.1 Run in a local Logstash clone
 
 - Edit Logstash `Gemfile` and add the local plugin path, for example:
@@ -75,7 +98,7 @@ bin/logstash-plugin install /your/local/plugin/logstash-filter-awesome.gem
 ```
 - Start Logstash and proceed to test the plugin
 
-## Contributing
+## Contributing to Logstash
 
 All contributions are welcome: ideas, patches, documentation, bug reports, complaints, and even something you drew up on a napkin.
 
