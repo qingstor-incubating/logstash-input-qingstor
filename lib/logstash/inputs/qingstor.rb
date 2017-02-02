@@ -123,6 +123,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
 
   private 
   def backup_to_bucket(key)
+    @backup_region = @backup_region.nil? ? @region : @backup_region
     properties = {'bucket-name' => @backup_bucket, 'zone' => @backup_region}
     bucket = QingStor::SDK::Bucket.new @qs_config, properties
     
