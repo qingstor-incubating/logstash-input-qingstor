@@ -5,11 +5,9 @@ require "stud/interval"
 require "qingstor/sdk"
 require "fileutils"
 
-# Generate a repeating message.
-#
-# This plugin is intented only as an example.
 
 class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
+  require "logstash/inputs/qingstor/qingstor_validator"
   config_name "qingstor"
 
   default :codec, "plain"
@@ -24,7 +22,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   config :bucket, :validate => :string, :required => true
 
   # The region of the QingStor bucket
-  config :region, :validate => :string, :required => true
+  config :region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
 
   # The prefix of filenames
   config :prefix, :validate => :string, :default => nil
@@ -61,11 +59,8 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     @qs_service = QingStor::SDK::Service.new @qs_config
     @qs_bucket = @qs_service.bucket @bucket, @region
 
-    if @qs_bucket.head[:status_code] != 200
-      @logger.error("The bucket doesn't exist, please check your bucket name and region'")
-    else 
-      @logger.info "QingStor: Done config"
-    end 
+    @qingstor_validator = QingstorValidator.new(@logger)
+    @qingstor_validator.bucket_valid?(@qs_bucket)
   end # def register
 
   def run(queue)

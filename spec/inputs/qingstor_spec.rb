@@ -52,5 +52,7 @@ describe LogStash::Inputs::Qingstor do
       delete_bucket(backup)
     end 
   end 
+
+  context ""
   
 end
