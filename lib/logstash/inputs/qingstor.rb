@@ -4,7 +4,7 @@ require "logstash/namespace"
 require "stud/interval"
 require "qingstor/sdk"
 require "fileutils"
-
+require "tmpdir"
 
 class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   require "logstash/inputs/qingstor/qingstor_validator"
@@ -27,7 +27,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   # The prefix of filenames
   config :prefix, :validate => :string, :default => nil
 
-  # If this set to true, the file will be deleted after processing
+  # If this set to true, the file will be deleted after processed
   config :delete_later, :validate => :boolean, :default => false
   
   # If this set to true, the file will backup to a local dir,
@@ -36,7 +36,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
 
   # If specified, the file will be upload to this bucket of the given region
   config :backup_bucket, :validate => :string, :default => nil
-  config :backup_region, :validate => :string, :default => nil
+  config :backup_region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
 
   # This prefix will add before backup filename.
   config :backup_prefix, :validate => :string, :default => nil
@@ -53,14 +53,21 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
 
   public
   def register
+
+    if !@local_dir.nil? && !directory_valid?(@local_dir)
+      raise LogStash::ConfigurationError, "Logstash must have the permissions to write to the temporary directory: #{@tmpdir}"
+    end
+
+
     @logger.info "Registering QingStor plugin", :bucket => @bucket, :region => @region
     
     @qs_config = QingStor::SDK::Config.init @access_key_id, @secret_access_key
     @qs_service = QingStor::SDK::Service.new @qs_config
     @qs_bucket = @qs_service.bucket @bucket, @region
 
-    @qingstor_validator = QingstorValidator.new(@logger)
-    @qingstor_validator.bucket_valid?(@qs_bucket)
+    QingstorValidator.bucket_valid?(@qs_bucket)
+    QingstorValidator.prefix_valid?(@backup_prefix)
+
   end # def register
 
   def run(queue)
@@ -108,7 +115,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   private
   def process_log(queue, key)
     # a global var, for the next possible upload and copy job 
-    @tmp_file_path = File.join('/tmp', File.basename(key))
+    @tmp_file_path = File.join(Dir.tmpdir, File.basename(key))
 
     File.open(@tmp_file_path, 'wb') do |logfile|
       logfile.write @qs_bucket.get_object(key)[:body]
@@ -242,4 +249,13 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   def stop
    Stud.stop!(@current_thread)
   end
+
+  def directory_valid?(path)
+    begin 
+      FileUtils.mkdir_p(path) unless Dir.exist?(path)
+      ::File.writable?(path)
+    rescue 
+      false 
+    end 
+  end 
 end # class LogStash::Inputs::Qingstor
