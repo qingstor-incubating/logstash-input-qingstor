@@ -1,78 +1,139 @@
-#Logstash Input Plugin for QingStor
+# LogstashInput Plugin for Qingstor 
 
-This is a  Logstash Input Plugin for QingStor - a object storage service in QingCloud, referencing the [s3 plugin](https://github.com/logstash-plugins/logstash-input-s3). Now it is a Just Running State, we still need time to improve it.
+这是一个适配了[Qingstor](https://www.qingcloud.com/products/storage#qingstor), 工作在logstash中的input插件.  Qingstor是[Qingcloud](https://www.qingcloud.com/)推出的对象存储服务.  
+作为一个input插件, 它能下载存储在Qingstor上的日志文件, 读入到logstash中进行进一步处理.  
+详细功能参考下面配置说明.  
 
-# configs for this plugin 
-```ruby
-  # The key id to access your QingStor
-  config :access_key_id, :validate => :string, :required => true
+目前代码尚未提交至官方插件库, 需要手动安装, 安装方法参考下文.
 
-  # The key to access your QingStor
-  config :secret_access_key, :validate => :string, :required => true
+## 1. 配置说明
 
-  # The name of the qingstor bucket
-  config :bucket, :validate => :string, :required => true
-
-  # The region of the QingStor bucket
-  config :region, :validate => :string, :required => true
-
-  # The prefix of filenames
-  config :prefix, :validate => :string, :default => nil
-
-  # If this set to true, the file will be deleted after processing
-  config :delete_later, :validate => :boolean, :default => false
-  
-  # If this set to true, the file will backup to a local dir,
-  # please make sure you can access to this dir.
-  config :local_dir, :validate => :string, :default => nil
-
-  # If specified, the file will be upload to this bucket of the given region
-  config :backup_bucket, :validate => :string, :default => nil
-  config :backup_region, :validate => :string, :default => nil
-
-  # This prefix will add before backup filename.
-  config :backup_prefix, :validate => :string, :default => nil
-  
-  # Use sincedb to record the last downloas time 
-  config :sincedb_path, :validate => :string, :default => nil 
-``` 
-
-# Logstash Plugin
-
-This is a plugin for [Logstash](https://github.com/elastic/logstash).
-
-It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
-
-## Documentation
-
-Logstash provides infrastructure to automatically generate documentation for this plugin. We use the asciidoc format to write documentation so any comments in the source code will be first converted into asciidoc and then into html. All plugin documentation are placed under one [central location](http://www.elastic.co/guide/en/logstash/current/).
-
-- For formatting code or config example, you can use the asciidoc `[source,ruby]` directive
-- For more asciidoc formatting tips, see the excellent reference here https://github.com/elastic/docs#asciidoc-guide
-
-## Need Help?
-
-Need help? Try #logstash on freenode IRC or the https://discuss.elastic.co/c/logstash discussion forum.
-
-## Developing
-
-### 1. Plugin Developement and Testing
-
-#### Code
-- To get started, you'll need JRuby with the Bundler gem installed.
-
-- Create a new plugin or clone and existing from the GitHub [logstash-plugins](https://github.com/logstash-plugins) organization. We also provide [example plugins](https://github.com/logstash-plugins?query=example).
-
-- Install dependencies
+#### 1.1 最小运行配置
+- 使用'-f' 接受一个*.conf文件或者使用'-e'参数最小运行配置时, 至少需要以下三项
 ```sh
-bundle install
+input {
+    qingstor {
+        access_key_id => 'your_access_key_id'           #required 
+        secret_access_key => 'your_secret_access_key'   #required  
+        bucket => 'bucket_name'                         #required 
+        # region => "pek3a"                             #optional, default value "pek3a"                                
+    }
+}
+
 ```
+
+#### 1.2 其他可选参数说明
+```sh
+input {
+    qingstor {
+        ......
+        # 指定下载文件的前缀. 
+        # 默认nil, 
+        prefix => 'aprefix'
+
+        # 本地保存临时文件的目录. 
+        # 默认: 系统临时文件目录下的qingstor2logstash文件夹, 例如linux下 "/tmp/qingstor2logstash".
+        tmpdir => '/local/temporary/directory' 
+
+        # 是否在处理之后, 删除远程bucket中的文件.
+        # 默认: false
+        delete_later => true
+
+        # 如果指定一个本地目录, 那么在处理完之后将文件备份至该位置.
+        # 默认:　nil 
+        local_dir => 'your/local/directory'
+
+        # 如果指定了该值, 那么在处理完之后将文件上传到Qingstor指定的bucket中.
+        # 默认: nil
+        backup_bucket => 'backupbucket'
+
+        # 配合上一项使用, 指定备份bucket所在的region.
+        # 默认: "pek3a", 可选枚举值: ["pek3a", "sh1a"]
+        backup_region => "sh1a"
+
+        # 备份文件的前缀
+        # 默认: nil 
+        backup_prefix => "logstash/backup"
+
+        # 指定一个sincedb的保存位置, sincedb用于记录上一次抓取文件的时间
+        # 没有指定时默认在用户HOME目录下创建
+        # 默认: nil
+        sincedb_path => "~/qingstor/.sincedb" 
+
+        # 每次抓取的时间间隔, 单位秒
+        # 默认: 10(s)
+        interval => 30
+                                       
+    }
+}
+
+```
+
+## 2. 安装插件
+
+#### 2.1 直接运行本地的插件
+
+- 编辑Logstash目录下的Genfile, 添加插件的路径, 例如
+```ruby
+gem "logstash-input-qingstor", :path => "/your/local/logstash-input-qingstor"
+```
+- 安装插件
+```sh
+bin/logstash-plugin install --no-verify
+```
+- 使用插件运行
+```sh
+bin/logstash -e "input {qingstor {  access_key_id => 'your_access_key_id'            
+        secret_access_key => 'your_secret_access_key'     
+        bucket => 'bucket_name'                          }}'
+```
+此时你对插件所做的任意的代码上的修改都会直接生效.
+
+#### 2.2 安装一个本地插件然后运行
+
+这一步你需要生成一个插件的gem包, 然后通过logstash来安装到logstash的插件目录下
+- 在logstash-input-qingstor项目目录下生成gem
+```sh
+gem build logstash-input-qingstor.gemspec
+```
+- 在Logstash的目录下使用logstash-plugin安装
+```sh
+bin/logstash-plugin install /your/local/plugin/logstash-input-qingstor.gem
+```
+- 安装完毕之后, 就可以使用Logstash运行开始测试了.
+
+
+# Logstash Output Plugin for Qingstor 
+
+As an input plugin, it can download the log files from [Qingstor](https://www.qingcloud.com/products/storage#qingstor), and read them into logstash.  
+Qingstor is a remarkable object storage service provided by [Qingcloud](https://www.qingcloud.com/).
+
+For now, We haven't submitted this to official plugin repository. If you want to have a try, please refer to the following guide to install it manually.
+
+## 1. Configuration Guide
+
+#### 1.1 Run in minimal Configuration Items
+```sh
+input {
+    qingstor {
+        access_key_id => 'your_access_key_id'           #required 
+        secret_access_key => 'your_secret_access_key'   #required  
+        bucket => 'bucket_name'                         #required 
+        # region => "pek3a"                             #optional, default value "pek3a"                                
+    }
+}
+
+```
+
+More configuration details please refer to [code part](lib/logstash/inputs/qingstor.rb).
+
+## 2. Running your unpublished Plugin in Logstash
 
 #### 2.1 Run in a local Logstash clone
 
 - Edit Logstash `Gemfile` and add the local plugin path, for example:
 ```ruby
-gem "logstash-filter-awesome", :path => "/your/local/logstash-filter-awesome"
+gem "logstash-input-qingstor", :path => "/your/local/logstash-input-qingstor"
 ```
 - Install plugin
 ```sh
@@ -80,7 +141,9 @@ bin/logstash-plugin install --no-verify
 ```
 - Run Logstash with your plugin
 ```sh
-bin/logstash -e 'filter {awesome {}}'
+bin/logstash -e "input {qingstor { access_key_id => 'your_access_key_id'            
+        secret_access_key => 'your_secret_access_key'     
+        bucket => 'bucket_name'                          }}"
 ```
 At this point any modifications to the plugin code will be applied to this local Logstash setup. After modifying the plugin, simply rerun Logstash.
 
@@ -90,20 +153,16 @@ You can use the same **2.1** method to run your plugin in an installed Logstash 
 
 - Build your plugin gem
 ```sh
-gem build logstash-filter-awesome.gemspec
+gem build logstash-input-qingstor.gemspec
 ```
 - Install the plugin from the Logstash home
 ```sh
-bin/logstash-plugin install /your/local/plugin/logstash-filter-awesome.gem
+bin/logstash-plugin install /your/local/plugin/logstash-input-qingstor.gem
 ```
 - Start Logstash and proceed to test the plugin
 
-## Contributing to Logstash
+## Contributing
+Please see [Contributing Guidelines](./CONTRIBUTING.md) of this project before submitting patches.
 
-All contributions are welcome: ideas, patches, documentation, bug reports, complaints, and even something you drew up on a napkin.
-
-Programming is not a required skill. Whatever you've seen about open source and maintainers or community members  saying "send patches or die" - you will not see that here.
-
-It is more important to the community that you are able to contribute.
-
-For more information about contributing, see the [CONTRIBUTING](https://github.com/elastic/logstash/blob/master/CONTRIBUTING.md) file.
+## LICENSE
+The Apache License (Version 2.0, January 2004).

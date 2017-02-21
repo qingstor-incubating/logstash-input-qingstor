@@ -24,29 +24,32 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   # The region of the QingStor bucket
   config :region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
 
-  # The prefix of filenames
+  # If specified, it would only download the files with the specified prefix.
   config :prefix, :validate => :string, :default => nil
 
-  # If this set to true, the file will be deleted after processed
+  # Set the directory where logstash store the tmp files before 
+  # sending it to logstash, default directory in linux /tmp/logstash2qingstor
+  config :tmpdir, :validate => :string, :default => File.join(Dir.tmpdir, "qingstor2logstash")
+
+  # If this set to true, the remote file will be deleted after processed
   config :delete_later, :validate => :boolean, :default => false
   
   # If this set to true, the file will backup to a local dir,
   # please make sure you can access to this dir.
-  config :local_dir, :validate => :string, :default => nil
+  config :local_dir, :validate => :string, :default => File.expand_path("~/")
 
   # If specified, the file will be upload to this bucket of the given region
   config :backup_bucket, :validate => :string, :default => nil
+
+  # Specified the backup region in Qingstor.
   config :backup_region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
 
   # This prefix will add before backup filename.
   config :backup_prefix, :validate => :string, :default => nil
   
-  # Use sincedb to record the last downloas time 
+  # Use sincedb to record the last download time 
   config :sincedb_path, :validate => :string, :default => nil 
   
-  # The message string to use in the event.
-  config :message, :validate => :string, :default => nil
-
   # Set how frequently messages should be sent.
   # The default, `10`, means send a message every 10 seconds.
   config :interval, :validate => :number, :default => 10
@@ -54,8 +57,12 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   public
   def register
 
-    if !@local_dir.nil? && !directory_valid?(@local_dir)
+    if !@tmpdir.nil? && !directory_valid?(@tmpdir)
       raise LogStash::ConfigurationError, "Logstash must have the permissions to write to the temporary directory: #{@tmpdir}"
+    end
+
+    if !@local_dir.nil? && !directory_valid?(@local_dir)
+      raise LogStash::ConfigurationError, "Logstash must have the permissions to write to the temporary directory: #{@local_dir}"
     end
 
 
@@ -78,7 +85,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     end
   end # def run
 
-  public
+   
   def process_files(queue)
     objects = list_new_files
 
@@ -88,7 +95,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     objects.each do |key, time|
       process_log(queue, key)
       backup_to_bucket key unless @backup_bucket.nil?
-      backup_to_local_dir key unless @local_dir.nil?
+      backup_to_local_dir unless @local_dir.nil?
       @qs_bucket.delete_object key if @delete_later
     end
 
@@ -98,7 +105,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     sincedb.write(Time.at(_time))
   end
 
-  public 
+  private 
   def list_new_files
     objects = {}
     @logger.info "starting fetching objects"
@@ -112,20 +119,17 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     return objects
   end
 
-  private
   def process_log(queue, key)
     # a global var, for the next possible upload and copy job 
-    @tmp_file_path = File.join(Dir.tmpdir, File.basename(key))
+    @tmp_file_path = File.join(@tmpdir, File.basename(key))
 
     File.open(@tmp_file_path, 'wb') do |logfile|
       logfile.write @qs_bucket.get_object(key)[:body]
     end
     process_local_log(queue, @tmp_file_path)
   end
-
-  private 
+ 
   def backup_to_bucket(key)
-    @backup_region = @backup_region.nil? ? @region : @backup_region
     properties = {'bucket-name' => @backup_bucket, 'zone' => @backup_region}
     bucket = QingStor::SDK::Bucket.new @qs_config, properties
     
@@ -133,24 +137,29 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
       res = bucket.put
       if res[:status_code] != 201
         @logger.error("ERROR : cannot create the bucket ", res[:message])
-        return 
+        raise LogStash::ConfigurationError, "cannot create the bucket"
       end 
     end 
     
     md5_string = Digest::MD5.file(@tmp_file_path).to_s
-    bucket.put_object key, { 
+
+    new_key = if backup_prefix.end_with?('/')
+                backup_prefix + key 
+              else 
+                backup_prefix + '/' + key 
+              end 
+
+    bucket.put_object new_key, { 
       'content_md5' => md5_string,
       'body' => File.open(@tmp_file_path)
     }
   end 
-
-  private 
-  def backup_to_local_dir(key)
+ 
+  def backup_to_local_dir
     FileUtils.mkdir_p @local_dir unless File.exist? @local_dir
     FileUtils.cp @tmp_file_path, @local_dir
   end
-
-  private 
+ 
   def process_local_log(queue, filename)
     read_file(filename) do |line|
       @codec.decode(line) do |event|
@@ -159,8 +168,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
       end
     end
   end
-  
-  private 
+   
   def read_file(filename, &block)
     if gzip?(filename)
       read_gzip_file(filename, block)
@@ -169,7 +177,6 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     end
   end
 
-  private
   def read_gzip_file(filename, block)
     begin
       Zlib::GzipReader.open(filename) do |decoder|
@@ -180,30 +187,25 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
       raise e 
     end 
   end 
-  
-  private 
+   
   def read_plain_file(filename, block)
     File.open(filename, 'rb') do |file|
       file.each(&block)
     end
   end
 
-  private
   def is_desired?(filename)
     return logger?(filename) || gzip?(filename)
   end
-
-  private 
+ 
   def logger?(filename)
     return filename.end_with?('.log')
   end
-
-  private 
+ 
   def gzip?(filename)
     return filename.end_with?('.gz')
   end
-
-  private 
+ 
   def sincedb
     @sincedb ||= if @sincedb_path.nil?
                     @logger.info("Using default path for the sincedb", :filename => sincedb_file)
@@ -213,13 +215,11 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
                     SinceDB::File.new(@sincedb_path)
                  end
   end 
-
-  private 
+ 
   def sincedb_file
     File.join(ENV["HOME"], ".sincedb_" + Digest::MD5.hexdigest("#{@bucket}+#{@prefix}"))
   end
 
-  private
   module SinceDB
     class File
       def initialize(file)
@@ -246,6 +246,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     end 
   end  
 
+  public 
   def stop
    Stud.stop!(@current_thread)
   end
