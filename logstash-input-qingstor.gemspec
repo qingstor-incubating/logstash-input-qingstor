@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
   s.version       = '0.1.0'
   s.licenses      = ['Apache License (2.0)']
   s.summary       = 'logstash input plugin for QingStor'
-  s.description   = 'use this plugin to fetch file as a input of logstash from QingStor'
+  s.description   = 'Use this plugin to fetch file as a input of logstash from Qingstor'
   s.homepage      = 'https://github.com/Tacinight/logstash-input-qingstor'
   s.authors       = ['Evan Zhao']
   s.email         = 'tacingiht@gmail.com'

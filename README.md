@@ -1,10 +1,14 @@
-# LogstashInput Plugin for Qingstor 
+# Logstash Input Plugin for Qingstor 
 
 这是一个适配了[Qingstor](https://www.qingcloud.com/products/storage#qingstor), 工作在logstash中的input插件.  Qingstor是[Qingcloud](https://www.qingcloud.com/)推出的对象存储服务.  
 作为一个input插件, 它能下载存储在Qingstor上的日志文件, 读入到logstash中进行进一步处理.  
 详细功能参考下面配置说明.  
 
-目前代码尚未提交至官方插件库, 需要手动安装, 安装方法参考下文.
+目前插件已经提交至rubygems.org, 使用以下命令安装:
+```sh
+    bin/logstash-plugin install logstash-input-qingstor
+```
+ 手动安装本地代码, 安装方法参考下文.
 
 ## 1. 配置说明
 
@@ -37,7 +41,7 @@ input {
 
         # 是否在处理之后, 删除远程bucket中的文件.
         # 默认: false
-        delete_later => true
+        delete_remote_files => true
 
         # 如果指定一个本地目录, 那么在处理完之后将文件备份至该位置.
         # 默认:　nil 
@@ -108,11 +112,15 @@ bin/logstash-plugin install /your/local/plugin/logstash-input-qingstor.gem
 As an input plugin, it can download the log files from [Qingstor](https://www.qingcloud.com/products/storage#qingstor), and read them into logstash.  
 Qingstor is a remarkable object storage service provided by [Qingcloud](https://www.qingcloud.com/).
 
-For now, We haven't submitted this to official plugin repository. If you want to have a try, please refer to the following guide to install it manually.
+For now, We've submitted this plugin to rubygems.org. Use the following command to install.
+```sh
+    bin/logstash-plugin install logstash-input-qingstor
+```
+If want to install the local code, please refer to the following guide to install it manually.
 
 ## 1. Configuration Guide
 
-#### 1.1 Run in minimal Configuration Items
+#### 1.1 Run in minimal Configuration Settings
 ```sh
 input {
     qingstor {

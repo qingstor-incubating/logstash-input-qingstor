@@ -32,7 +32,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   config :tmpdir, :validate => :string, :default => File.join(Dir.tmpdir, "qingstor2logstash")
 
   # If this set to true, the remote file will be deleted after processed
-  config :delete_later, :validate => :boolean, :default => false
+  config :delete_remote_files, :validate => :boolean, :default => false
   
   # If this set to true, the file will backup to a local dir,
   # please make sure you can access to this dir.
@@ -96,7 +96,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
       process_log(queue, key)
       backup_to_bucket key unless @backup_bucket.nil?
       backup_to_local_dir unless @local_dir.nil?
-      @qs_bucket.delete_object key if @delete_later
+      @qs_bucket.delete_object key if @delete_remote_files
     end
 
     # if fetched nothing, just return
