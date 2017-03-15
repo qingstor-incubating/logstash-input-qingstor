@@ -73,7 +73,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     @qs_bucket = @qs_service.bucket @bucket, @region
 
     QingstorValidator.bucket_valid?(@qs_bucket)
-    QingstorValidator.prefix_valid?(@backup_prefix)
+    QingstorValidator.prefix_valid?(@backup_prefix) unless @backup_prefix.nil?
 
   end # def register
 
@@ -248,7 +248,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
 
   public 
   def stop
-   Stud.stop!(@current_thread)
+   Stud.stop!(@current_thread) unless @current_thread.nil?
   end
 
   def directory_valid?(path)
