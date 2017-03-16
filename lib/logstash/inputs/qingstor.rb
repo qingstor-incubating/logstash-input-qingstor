@@ -36,7 +36,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   
   # If this set to true, the file will backup to a local dir,
   # please make sure you can access to this dir.
-  config :local_dir, :validate => :string, :default => File.expand_path("~/")
+  config :backup_local_dir, :validate => :string, :default => File.expand_path("~/")
 
   # If specified, the file will be upload to this bucket of the given region
   config :backup_bucket, :validate => :string, :default => nil
@@ -44,8 +44,8 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   # Specified the backup region in Qingstor.
   config :backup_region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
 
-  # This prefix will add before backup filename.
-  config :backup_prefix, :validate => :string, :default => nil
+  # This prefix, specially in qingstor, will add before the backup filename
+  config :backup_prefix, :validate => :string, :default => ""
   
   # Use sincedb to record the last download time 
   config :sincedb_path, :validate => :string, :default => nil 
@@ -61,8 +61,8 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
       raise LogStash::ConfigurationError, "Logstash must have the permissions to write to the temporary directory: #{@tmpdir}"
     end
 
-    if !@local_dir.nil? && !directory_valid?(@local_dir)
-      raise LogStash::ConfigurationError, "Logstash must have the permissions to write to the temporary directory: #{@local_dir}"
+    if !@backup_local_dir.nil? && !directory_valid?(@backup_local_dir)
+      raise LogStash::ConfigurationError, "Logstash must have the permissions to write to the temporary directory: #{@backup_local_dir}"
     end
 
 
@@ -95,7 +95,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     objects.each do |key, time|
       process_log(queue, key)
       backup_to_bucket key unless @backup_bucket.nil?
-      backup_to_local_dir unless @local_dir.nil?
+      backup_to_local_dir unless @backup_local_dir.nil?
       @qs_bucket.delete_object key if @delete_remote_files
     end
 
@@ -143,10 +143,10 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     
     md5_string = Digest::MD5.file(@tmp_file_path).to_s
 
-    new_key = if backup_prefix.end_with?('/')
-                backup_prefix + key 
+    new_key = if @backup_prefix.end_with?('/')
+                @backup_prefix + key 
               else 
-                backup_prefix + '/' + key 
+                @backup_prefix + '/' + key 
               end 
 
     bucket.put_object new_key, { 
@@ -156,8 +156,8 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   end 
  
   def backup_to_local_dir
-    FileUtils.mkdir_p @local_dir unless File.exist? @local_dir
-    FileUtils.cp @tmp_file_path, @local_dir
+    FileUtils.mkdir_p @backup_local_dir unless File.exist? @backup_local_dir
+    FileUtils.cp @tmp_file_path, @backup_local_dir
   end
  
   def process_local_log(queue, filename)

@@ -31,7 +31,7 @@ describe LogStash::Inputs::Qingstor do
 
   context "local backup" do 
     it "backup to local dir" do 
-      fetch_events(config.merge({"local_dir" => local_backup_dir }))
+      fetch_events(config.merge({"backup_local_dir" => local_backup_dir }))
       expect(File.exists?(File.join(local_backup_dir, key1))).to be_truthy
       expect(File.exists?(File.join(local_backup_dir, key2))).to be_truthy
     end 
@@ -53,6 +53,4 @@ describe LogStash::Inputs::Qingstor do
     end 
   end 
 
-  context ""
-  
 end
