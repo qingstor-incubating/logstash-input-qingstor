@@ -43,6 +43,14 @@ input {
         # 默认: false
         delete_remote_files => true
 
+        # 重新配置qingstor的地址
+        # 默认: nil
+        host => "new.qingstor.net"
+
+        # 重新配置qingstor地址的端口号
+        # 默认: 443
+        port => 443
+
         # 如果指定一个本地目录, 那么在处理完之后将文件备份至该位置.
         # 默认:　nil 
         local_dir => 'your/local/directory'

@@ -18,11 +18,17 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   # The key to access your QingStor
   config :secret_access_key, :validate => :string, :required => true
 
+  # If specified, it would redirect to this host address.
+  config :host, :validate => :string, :default => nil
+
+  # It specifies the host port, please coordinate with config 'host'.
+  config :port, :validate => :number, :default => 443
+
   # The name of the qingstor bucket
   config :bucket, :validate => :string, :required => true
 
   # The region of the QingStor bucket
-  config :region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
+  config :region, :validate => :string, :default => "pek3a"
 
   # If specified, it would only download the files with the specified prefix.
   config :prefix, :validate => :string, :default => nil
@@ -69,6 +75,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     @logger.info "Registering QingStor plugin", :bucket => @bucket, :region => @region
     
     @qs_config = QingStor::SDK::Config.init @access_key_id, @secret_access_key
+    @qs_config.update({ host: @host, port: @port }) unless @host.nil?
     @qs_service = QingStor::SDK::Service.new @qs_config
     @qs_bucket = @qs_service.bucket @bucket, @region
 
@@ -143,7 +150,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
     
     md5_string = Digest::MD5.file(@tmp_file_path).to_s
 
-    new_key = if @backup_prefix.end_with?('/')
+    new_key = if @backup_prefix.end_with?('/') || @backup_prefix.empty?
                 @backup_prefix + key 
               else 
                 @backup_prefix + '/' + key 

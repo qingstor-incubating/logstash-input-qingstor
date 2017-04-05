@@ -37,7 +37,10 @@ def list_remote_file(bucket = ENV['bucket'], region = ENV['region'])
   return bucket.list_objects[:keys]
 end
 
-def delete_bucket(bucket)
+def clean_and_delete_bucket(bucket)
   bucket = qs_init_bucket(bucket)
+  bucket.list_objects[:keys].each do |file|
+    bucket.delete_object file[:key]
+  end 
   bucket.delete
 end 

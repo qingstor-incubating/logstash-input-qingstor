@@ -29,7 +29,7 @@ describe LogStash::Inputs::Qingstor do
   let(:backup) { "logstash-backup" }
   let(:local_backup_dir) { File.join(Dir.tmpdir, backup) }
 
-  context "local backup" do 
+  context "at the local end" do 
     it "backup to local dir" do 
       fetch_events(config.merge({"backup_local_dir" => local_backup_dir }))
       expect(File.exists?(File.join(local_backup_dir, key1))).to be_truthy
@@ -42,15 +42,25 @@ describe LogStash::Inputs::Qingstor do
     end 
   end 
 
-  context "remote backup" do 
+  context "at the remote end " do 
     it "backup to another bucket" do 
       fetch_events(config.merge({"backup_bucket" => backup}))
       expect(list_remote_file(backup).size).to eq(2)
     end 
 
     after do 
-      delete_bucket(backup)
+      clean_and_delete_bucket(backup)
     end 
   end 
+
+  context "advance config" do
+    it "redirect to the specified host without specified port" do 
+      expect{fetch_events(config.merge({"host" => "qingstor.dev"}))}.to raise_error(Net::HTTP::Persistent::Error)
+    end 
+
+    it "redirect to the specified host without specified port" do 
+      expect{fetch_events(config.merge({"host" => "qingstor.dev", "port" => 444}))}.to raise_error(Net::HTTP::Persistent::Error)
+    end 
+  end
 
 end

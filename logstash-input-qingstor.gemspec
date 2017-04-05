@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
   s.name          = 'logstash-input-qingstor'
-  s.version       = '0.1.2'
+  s.version       = '0.1.3'
   s.licenses      = ['Apache License (2.0)']
   s.summary       = 'logstash input plugin for QingStor'
-  s.description   = 'Use this plugin to fetch file as a input of logstash from Qingstor'
+  s.description   = 'Use this plugin to fetch file from Qingstor as the input of logstash'
   s.homepage      = 'https://github.com/Tacinight/logstash-input-qingstor'
   s.authors       = ['Evan Zhao']
   s.email         = 'tacingiht@gmail.com'
