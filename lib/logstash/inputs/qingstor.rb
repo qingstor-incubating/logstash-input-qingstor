@@ -24,7 +24,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   # It specifies the host port, please coordinate with config 'host'.
   config :port, :validate => :number, :default => 443
 
-  # The name of the qingstor bucket
+  # The name of the QingStor bucket
   config :bucket, :validate => :string, :required => true
 
   # The region of the QingStor bucket
@@ -40,17 +40,17 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   # If this set to true, the remote file will be deleted after processed
   config :delete_remote_files, :validate => :boolean, :default => false
   
-  # If this set to true, the file will backup to a local dir,
+  # If this set to a valid path, the file will be backup under a local path,
   # please make sure you can access to this dir.
-  config :backup_local_dir, :validate => :string, :default => File.expand_path("~/")
+  config :backup_local_dir, :validate => :string, :default => nil
 
   # If specified, the file will be upload to this bucket of the given region
   config :backup_bucket, :validate => :string, :default => nil
 
-  # Specified the backup region in Qingstor.
-  config :backup_region, :validate => ["pek3a", "sh1a"], :default => "pek3a"
+  # Specified the backup region in QingStor.
+  config :backup_region, :validate => :string, :default => "pek3a"
 
-  # This prefix, specially in qingstor, will add before the backup filename
+  # This prefix, specially in QingStor, will add before the backup filename
   config :backup_prefix, :validate => :string, :default => ""
   
   # Use sincedb to record the last download time 
