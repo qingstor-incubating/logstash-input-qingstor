@@ -9,7 +9,7 @@ For now, We've submitted this plugin to rubygems.org. Use the following command 
 ```
 If want to install the local code, please refer to the following guide to install it manually.
 
-Simple Chinese version README can be found [here](/README_zh_CN.md)
+Simplified Chinese version README can be found [here](/README_zh_CN.md)
 ## 1. Configuration Guide
 
 #### 1.1 Run in minimal Configuration Settings

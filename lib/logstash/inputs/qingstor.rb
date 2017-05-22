@@ -34,7 +34,7 @@ class LogStash::Inputs::Qingstor < LogStash::Inputs::Base
   config :prefix, :validate => :string, :default => nil
 
   # Set the directory where logstash store the tmp files before 
-  # sending it to logstash, default directory in linux /tmp/logstash2qingstor
+  # sending it to logstash, default directory in linux /tmp/qingstor2logstash
   config :tmpdir, :validate => :string, :default => File.join(Dir.tmpdir, "qingstor2logstash")
 
   # If this set to true, the remote file will be deleted after processed

@@ -2,3 +2,4 @@
 *.lock
 .mvn
 test.rb
+.ruby-version

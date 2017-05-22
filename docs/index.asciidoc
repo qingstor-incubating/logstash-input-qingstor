@@ -136,10 +136,10 @@ The prefix to filter the files.
 ===== `tmpdir` 
 
   * Value type is <<string,string>>
-  * Default value is `/tmp/logstash2qingstor` in Linux System.
+  * Default value is `/tmp/qingstor2logstash` in Linux System.
 
 Set the directory where logstash store the tmp files before 
-sending it to logstash, default directory in linux is /tmp/logstash2qingstor.
+sending it to logstash, default directory in linux is /tmp/qingstor2logstash.
 
 [id="plugins-{type}s-{plugin}-delete_remote_files"]
 ===== `delete_remote_files` 
