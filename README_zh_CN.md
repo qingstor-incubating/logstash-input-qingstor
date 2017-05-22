@@ -1,7 +1,7 @@
-# Logstash Input Plugin for Qingstor 
+# Logstash Input Plugin for QingStor 
 
-这是一个适配了[Qingstor](https://www.qingcloud.com/products/storage#qingstor), 工作在logstash中的input插件.  Qingstor是[Qingcloud](https://www.qingcloud.com/)推出的对象存储服务.  
-作为一个input插件, 它能下载存储在Qingstor上的日志文件, 读入到logstash中进行进一步处理.  
+这是一个适配了[QingStor](https://www.qingcloud.com/products/storage#qingstor), 工作在logstash中的input插件.  QingStor是[QingCloud](https://www.qingcloud.com/)推出的对象存储服务.  
+作为一个input插件, 它能下载存储在QingStor上的日志文件, 读入到logstash中进行进一步处理.  
 详细功能参考下面配置说明.  
 
 目前插件已经提交至rubygems.org, 使用以下命令安装:
@@ -43,11 +43,11 @@ input {
         # 默认: false
         delete_remote_files => true
 
-        # 重新配置qingstor的地址
+        # 重新配置QingStor的地址
         # 默认: nil
         host => "new.qingstor.net"
 
-        # 重新配置qingstor地址的端口号
+        # 重新配置QingStor地址的端口号
         # 默认: 443
         port => 443
 
@@ -55,7 +55,7 @@ input {
         # 默认:　nil 
         local_dir => 'your/local/directory'
 
-        # 如果指定了该值, 那么在处理完之后将文件上传到Qingstor指定的bucket中.
+        # 如果指定了该值, 那么在处理完之后将文件上传到QingStor指定的bucket中.
         # 默认: nil
         backup_bucket => 'backupbucket'
 

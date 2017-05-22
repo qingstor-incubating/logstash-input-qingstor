@@ -1,7 +1,7 @@
-# Logstash Output Plugin for Qingstor 
+# Logstash Output Plugin for QingStor 
 
-As an input plugin, it can download the log files from [Qingstor](https://www.qingcloud.com/products/storage#qingstor), and read them into logstash.  
-Qingstor is a remarkable object storage service provided by [Qingcloud](https://www.qingcloud.com/).
+As an input plugin, it can download the log files from [QingStor](https://www.qingcloud.com/products/storage#qingstor), and read them into logstash.  
+QingStor is a remarkable object storage service provided by [QingCloud](https://www.qingcloud.com/).
 
 For now, We've submitted this plugin to rubygems.org. Use the following command to install.
 ```sh
