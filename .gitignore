@@ -3,3 +3,4 @@
 .mvn
 test.rb
 .ruby-version
+*.txt
